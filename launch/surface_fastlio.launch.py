@@ -123,7 +123,7 @@ def generate_launch_description():
             DeclareLaunchArgument("robot_namespace", default_value="blueboat"),
             DeclareLaunchArgument("output_odom_topic", default_value=""),
             DeclareLaunchArgument("output_ned_odom_topic", default_value=""),
-            DeclareLaunchArgument("map_frame", default_value="map"),
+            DeclareLaunchArgument("map_frame", default_value="blueboat/map"),
             DeclareLaunchArgument("odom_frame", default_value="world_enu"),
             DeclareLaunchArgument("base_link_frame", default_value=""),
             DeclareLaunchArgument("world_frame", default_value="world_enu"),

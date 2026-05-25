@@ -4,7 +4,7 @@ ekf_filter_node:
     sensor_timeout: 0.2
     two_d_mode: false
     publish_tf: false
-    map_frame: map
+    map_frame: blueboat/map
     odom_frame: world_enu
     base_link_frame: cirtesub/base_link
     world_frame: world_enu

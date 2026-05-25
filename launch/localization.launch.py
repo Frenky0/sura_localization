@@ -42,7 +42,7 @@ def generate_launch_description():
                 default_value="/sura/localization/odometry",
             ),
             DeclareLaunchArgument("publish_tf", default_value="true"),
-            DeclareLaunchArgument("map_frame", default_value="map"),
+            DeclareLaunchArgument("map_frame", default_value="blueboat/map"),
             DeclareLaunchArgument("odom_frame", default_value="odom"),
             DeclareLaunchArgument("base_link_frame", default_value="cirtesub/base_link"),
             DeclareLaunchArgument("world_frame", default_value="odom"),
