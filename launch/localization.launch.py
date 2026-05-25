@@ -14,6 +14,7 @@ def generate_launch_description():
     depth_config = os.path.join(package_share, "config", "ekf_with_depth.yaml")
 
     use_depth = LaunchConfiguration("use_depth")
+    robot_namespace = LaunchConfiguration("robot_namespace")
     imu_topic = LaunchConfiguration("imu_topic")
     depth_odom_topic = LaunchConfiguration("depth_odom_topic")
     output_odom_topic = LaunchConfiguration("output_odom_topic")
@@ -34,17 +35,18 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
+            DeclareLaunchArgument("robot_namespace", default_value="sura"),
             DeclareLaunchArgument("use_depth", default_value="false"),
-            DeclareLaunchArgument("imu_topic", default_value="/sura/imu/data"),
-            DeclareLaunchArgument("depth_odom_topic", default_value="/sura/depth/odometry"),
+            DeclareLaunchArgument("imu_topic", default_value=["/", robot_namespace, "/imu/data"]),
+            DeclareLaunchArgument("depth_odom_topic", default_value=["/", robot_namespace, "/depth/odometry"]),
             DeclareLaunchArgument(
                 "output_odom_topic",
-                default_value="/sura/localization/odometry",
+                default_value=["/", robot_namespace, "/localization/odometry"],
             ),
             DeclareLaunchArgument("publish_tf", default_value="true"),
-            DeclareLaunchArgument("map_frame", default_value="blueboat/map"),
+            DeclareLaunchArgument("map_frame", default_value=[robot_namespace, "/map"]),
             DeclareLaunchArgument("odom_frame", default_value="odom"),
-            DeclareLaunchArgument("base_link_frame", default_value="cirtesub/base_link"),
+            DeclareLaunchArgument("base_link_frame", default_value=[robot_namespace, "/base_link"]),
             DeclareLaunchArgument("world_frame", default_value="odom"),
             Node(
                 package="tf2_ros",

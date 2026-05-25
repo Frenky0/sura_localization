@@ -12,6 +12,12 @@ def namespaced_config(config_file, robot_namespace):
     text = Path(config_file).read_text(encoding="utf-8")
     text = text.replace("/cirtesub/", f"/{robot_namespace}/")
     text = text.replace("cirtesub/", f"{robot_namespace}/")
+    text = text.replace("/blueboat/", f"/{robot_namespace}/")
+    text = text.replace("blueboat/", f"{robot_namespace}/")
+    text = text.replace("/bluerov/", f"/{robot_namespace}/")
+    text = text.replace("bluerov/", f"{robot_namespace}/")
+    text = text.replace("blueboat/map", f"{robot_namespace}/map")
+    text = text.replace("bluerov/map", f"{robot_namespace}/map")
 
     output_file = f"/tmp/sura_localization_{robot_namespace}_{Path(config_file).name}"
     Path(output_file).write_text(text, encoding="utf-8")
@@ -42,6 +48,9 @@ def launch_setup(context, *args, **kwargs):
     base_link_frame = LaunchConfiguration("base_link_frame").perform(context)
     if not base_link_frame:
         base_link_frame = f"{robot_namespace}/base_link"
+    map_frame_value = map_frame.perform(context)
+    if not map_frame_value:
+        map_frame_value = f"{robot_namespace}/map"
 
     output_odom_topic = LaunchConfiguration("output_odom_topic").perform(context)
     if not output_odom_topic:
@@ -56,7 +65,7 @@ def launch_setup(context, *args, **kwargs):
     datum_heading = float(LaunchConfiguration("datum_heading").perform(context))
 
     frame_overrides = {
-        "map_frame": map_frame,
+        "map_frame": map_frame_value,
         "odom_frame": odom_frame,
         "base_link_frame": base_link_frame,
         "world_frame": world_frame,
@@ -204,7 +213,7 @@ def generate_launch_description():
             DeclareLaunchArgument("robot_namespace", default_value="sura"),
             DeclareLaunchArgument("output_odom_topic", default_value=""),
             DeclareLaunchArgument("output_ned_odom_topic", default_value=""),
-            DeclareLaunchArgument("map_frame", default_value="blueboat/map"),
+            DeclareLaunchArgument("map_frame", default_value=""),
             DeclareLaunchArgument("odom_frame", default_value="world_enu"),
             DeclareLaunchArgument("base_link_frame", default_value=""),
             DeclareLaunchArgument("world_frame", default_value="world_enu"),

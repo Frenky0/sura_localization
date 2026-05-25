@@ -4,7 +4,7 @@ ekf_filter_node:
     sensor_timeout: 0.2
     two_d_mode: true
     publish_tf: true
-    map_frame: blueboat/map
+    map_frame: cirtesub/map
     odom_frame: world_enu
     base_link_frame: cirtesub/base_link_enu
     world_frame: world_enu
@@ -30,7 +30,7 @@ ekf_filter_node:
     odom1_queue_size: 10
     odom1_pose_rejection_threshold: 10.0
 
-    imu0: /blueboat/sensors/mag/imu_enu
+    imu0: /cirtesub/sensors/mag/imu_enu
     imu0_config: [false, false, false,
                   false, false, true,
                   false, false, false,
