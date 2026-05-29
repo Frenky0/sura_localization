@@ -2,6 +2,13 @@
 
 This package launches the AUV localization stack around `robot_localization`.
 
+`auv_localization.launch.py` is the generic launch file for any robot. It only
+starts `robot_localization` nodes plus optional SURA frame-conversion helpers.
+Robot-specific sources such as simulators, pressure adapters, ArUco maps, or
+custom sensor bridges should live in a robot-specific launch file.
+
+`cirtesu_auv_localization.launch.py` is the Cirtesu/Stonefish-specific launch.
+
 The important rule is:
 
 ```text
@@ -86,7 +93,7 @@ RAW SIM/SENSOR TOPICS                         ENU INTERNAL TOPICS               
 
 ## Launched Nodes
 
-`auv_localization.launch.py` starts:
+`cirtesu_auv_localization.launch.py` starts:
 
 | Node | Package | Purpose |
 | --- | --- | --- |
@@ -144,7 +151,7 @@ RAW SIM/SENSOR TOPICS                         ENU INTERNAL TOPICS               
 Example:
 
 ```bash
-ros2 launch sura_localization auv_localization.launch.py \
+ros2 launch sura_localization cirtesu_auv_localization.launch.py \
   datum_latitude:=39.9944 \
   datum_longitude:=-0.0741 \
   datum_heading:=0.0
