@@ -52,8 +52,6 @@ navsat_transform_node:
     publish_filtered_gps: true
     use_odometry_yaw: true
     wait_for_datum: true
-    # datum: [39.9681344, 0.0199784, 0.0]
-    datum: [39.994335199497364, -0.07400607762331379, 0.0]
     broadcast_utm_transform: false
     broadcast_utm_transform_as_parent_frame: false
 

@@ -107,8 +107,8 @@ def launch_setup(context, *args, **kwargs):
             ],
         ),
         Node(
-            package="cirtesub_stonefish",
-            executable="pressure_to_pose.py",
+            package="sura_localization",
+            executable="pressure_to_pose",
             name="pressure_to_pose",
             output="screen",
             parameters=[
@@ -184,9 +184,9 @@ def generate_launch_description():
             DeclareLaunchArgument("world_frame", default_value="world_enu"),
             DeclareLaunchArgument("frame_convention", default_value="enu"),
             DeclareLaunchArgument("publish_tf", default_value="false"),
-            DeclareLaunchArgument("datum_latitude", default_value="39.9944"),
-            DeclareLaunchArgument("datum_longitude", default_value="-0.0741"),
-            DeclareLaunchArgument("datum_heading", default_value="0.0"),
+            DeclareLaunchArgument("datum_latitude"),
+            DeclareLaunchArgument("datum_longitude"),
+            DeclareLaunchArgument("datum_heading"),
             OpaqueFunction(function=launch_setup),
         ]
     )

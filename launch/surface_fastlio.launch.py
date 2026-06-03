@@ -30,6 +30,9 @@ def launch_setup(context, *args, **kwargs):
     world_frame_value = LaunchConfiguration("ekf_world_frame").perform(context)
     if not world_frame_value:
         world_frame_value = map_frame_value
+    datum_latitude = float(LaunchConfiguration("datum_latitude").perform(context))
+    datum_longitude = float(LaunchConfiguration("datum_longitude").perform(context))
+    datum_heading = float(LaunchConfiguration("datum_heading").perform(context))
 
     ekf_overrides = {
         "map_frame": map_frame_value,
@@ -71,6 +74,10 @@ def launch_setup(context, *args, **kwargs):
             output="screen",
             parameters=[
                 config_file,
+                {
+                    "wait_for_datum": True,
+                    "datum": [datum_latitude, datum_longitude, datum_heading],
+                },
             ],
         ),
         Node(
@@ -99,6 +106,9 @@ def generate_launch_description():
             DeclareLaunchArgument("base_link_frame", default_value=""),
             DeclareLaunchArgument("ekf_world_frame", default_value=""),
             DeclareLaunchArgument("publish_tf", default_value="true"),
+            DeclareLaunchArgument("datum_latitude"),
+            DeclareLaunchArgument("datum_longitude"),
+            DeclareLaunchArgument("datum_heading"),
             OpaqueFunction(function=launch_setup),
         ]
     )

@@ -66,7 +66,7 @@ RAW SIM/SENSOR TOPICS                         ENU INTERNAL TOPICS               
   sensor_msgs/FluidPressure                         |
         |                                            |
         v                                            |
-  pressure_to_pose.py                                |
+  pressure_to_pose                                  |
         |                                            |
         v                                            |
 /cirtesub/sensors/pressure/pose --------------------+
@@ -99,7 +99,7 @@ RAW SIM/SENSOR TOPICS                         ENU INTERNAL TOPICS               
 | --- | --- | --- |
 | `world_ned_to_world_enu` | `tf2_ros` | Publishes the static transform between `world_ned` and `world_enu`. |
 | `imu_ned_to_enu` | `sura_localization` | Converts the raw Stonefish IMU into ENU before it reaches `robot_localization`. |
-| `pressure_to_pose` | `cirtesub_stonefish` | Converts fluid pressure into a depth pose in `world_enu`. |
+| `pressure_to_pose` | `sura_localization` | Converts fluid pressure into a depth pose in `world_enu`. |
 | `navsat_transform_node` | `robot_localization` | Converts GPS fixes into ENU odometry. |
 | `ekf_filter_node` | `robot_localization` | Fuses GPS, pressure, DVL, and IMU in `world_enu`. |
 | `gps_enu_to_ned_odometry` | `sura_localization` | Converts the EKF output from ENU to the public NED odometry. |
@@ -110,7 +110,7 @@ RAW SIM/SENSOR TOPICS                         ENU INTERNAL TOPICS               
 | --- | --- |
 | `dvl_to_twist.py` | `/cirtesub/sensors/dvl/twist` |
 
-`pressure_to_pose.py` is intentionally launched by `sura_localization`, not by `cirtesub_stonefish`, because its output frame must match the localization frame convention.
+`pressure_to_pose` is intentionally launched by `sura_localization`, not by `cirtesub_stonefish`, because its output frame must match the localization frame convention.
 
 ## Expected Inputs
 
@@ -118,7 +118,7 @@ RAW SIM/SENSOR TOPICS                         ENU INTERNAL TOPICS               
 | --- | --- | --- | --- |
 | `/cirtesub/sensors/gps` | `sensor_msgs/NavSatFix` | `cirtesub/GPS` | `navsat_transform_node` |
 | `/cirtesub/sensors/imu` | `sensor_msgs/Imu` | Stonefish/NED convention | `ned_to_enu_imu` |
-| `/cirtesub/sensors/pressure` | `sensor_msgs/FluidPressure` | Pressure sensor frame | `pressure_to_pose.py` |
+| `/cirtesub/sensors/pressure` | `sensor_msgs/FluidPressure` | Pressure sensor frame | `pressure_to_pose` |
 | `/cirtesub/sensors/dvl/twist` | `geometry_msgs/TwistWithCovarianceStamped` | `cirtesub/DVL` | `ekf_node` |
 
 ## Internal Topics
@@ -126,7 +126,7 @@ RAW SIM/SENSOR TOPICS                         ENU INTERNAL TOPICS               
 | Topic | Type | Frame | Producer | Consumer |
 | --- | --- | --- | --- | --- |
 | `/cirtesub/sensors/imu_enu` | `sensor_msgs/Imu` | `cirtesub/IMU` | `ned_to_enu_imu` | `ekf_node`, `navsat_transform_node` |
-| `/cirtesub/sensors/pressure/pose` | `geometry_msgs/PoseWithCovarianceStamped` | `world_enu` | `pressure_to_pose.py` | `ekf_node` |
+| `/cirtesub/sensors/pressure/pose` | `geometry_msgs/PoseWithCovarianceStamped` | `world_enu` | `pressure_to_pose` | `ekf_node` |
 | `/cirtesub/sensors/gps/odometry` | `nav_msgs/Odometry` | `world_enu` | `navsat_transform_node` | `ekf_node` |
 | `/cirtesub/localization/odometry_enu` | `nav_msgs/Odometry` | `world_enu` | `ekf_node` | `enu_to_ned_odometry`, `navsat_transform_node` |
 
@@ -140,9 +140,9 @@ RAW SIM/SENSOR TOPICS                         ENU INTERNAL TOPICS               
 
 | Argument | Default | Description |
 | --- | --- | --- |
-| `datum_latitude` | `39.9944` | GPS datum latitude. |
-| `datum_longitude` | `-0.0741` | GPS datum longitude. |
-| `datum_heading` | `0.0` | ENU heading used by `navsat_transform_node`; `0.0` means East. |
+| `datum_latitude` | required | GPS datum latitude. |
+| `datum_longitude` | required | GPS datum longitude. |
+| `datum_heading` | required | ENU heading used by `navsat_transform_node`; `0.0` means East. |
 | `output_odom_topic` | `/cirtesub/localization/odometry_enu` | Internal ENU EKF output. |
 | `odom_frame` | `world_enu` | Odometry frame used by `robot_localization`. |
 | `world_frame` | `world_enu` | World frame used by `robot_localization`. |
@@ -152,9 +152,9 @@ Example:
 
 ```bash
 ros2 launch sura_localization cirtesu_auv_localization.launch.py \
-  datum_latitude:=39.9944 \
-  datum_longitude:=-0.0741 \
-  datum_heading:=0.0
+  datum_latitude:=<latitude> \
+  datum_longitude:=<longitude> \
+  datum_heading:=<heading>
 ```
 
 ## Conversion Rules

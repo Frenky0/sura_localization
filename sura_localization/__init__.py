@@ -1,1 +1,0 @@
-"""SURA localization package."""
