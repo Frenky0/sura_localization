@@ -18,6 +18,7 @@ public:
   {
     declare_parameter<std::string>("input_topic", "sensors/pressure");
     declare_parameter<std::string>("output_topic", "sensors/pressure/pose");
+    declare_parameter<std::string>("environment", "real");
     declare_parameter<std::string>("frame_id", "world_enu");
     declare_parameter<std::string>("sensor_frame_id", "");
     declare_parameter<bool>("positive_down", true);
@@ -61,8 +62,27 @@ private:
       return;
     }
 
-    const double surface_pressure = get_parameter("surface_pressure_pa").as_double();
-    const double depth = (msg.fluid_pressure - surface_pressure) / (density * gravity);
+    const auto environment = get_parameter("environment").as_string();
+    double depth = 0.0;
+
+    if (environment == "sim") {
+      if (!has_sim_surface_pressure_) {
+        sim_surface_pressure_ = msg.fluid_pressure;
+        has_sim_surface_pressure_ = true;
+        RCLCPP_INFO(
+          get_logger(),
+          "Using %.6f as simulated surface pressure reference",
+          sim_surface_pressure_);
+      }
+
+      const double pressure_delta_pa = msg.fluid_pressure - sim_surface_pressure_;
+      depth = pressure_delta_pa / (density * gravity);
+    } else {
+      const double surface_pressure = get_parameter("surface_pressure_pa").as_double();
+      const double pressure_delta_pa = msg.fluid_pressure - surface_pressure;
+      depth = pressure_delta_pa / (density * gravity);
+    }
+
     if (!std::isfinite(depth)) {
       return;
     }
@@ -94,6 +114,9 @@ private:
 
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr publisher_;
   rclcpp::Subscription<sensor_msgs::msg::FluidPressure>::SharedPtr subscription_;
+
+  bool has_sim_surface_pressure_{false};
+  double sim_surface_pressure_{0.0};
 };
 
 }  // namespace

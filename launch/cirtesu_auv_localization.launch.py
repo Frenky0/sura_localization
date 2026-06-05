@@ -1,125 +1,68 @@
 import os
 
+import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 
+def namespaced_frame(robot_namespace, frame_name):
+    if robot_namespace:
+        return f"{robot_namespace}/{frame_name}"
+    return frame_name
+
+
+def load_node_parameters(config_path, node_name):
+    with open(config_path, "r", encoding="utf-8") as config_file:
+        config = yaml.safe_load(config_file) or {}
+    return config.get(node_name, {}).get("ros__parameters", {})
+
+
 def launch_setup(context, *args, **kwargs):
     robot_namespace = LaunchConfiguration("robot_namespace").perform(context).strip("/")
-    if not robot_namespace:
-        raise RuntimeError("Launch argument 'robot_namespace' cannot be empty.")
-
-    package_share = get_package_share_directory("sura_localization")
     aruco_share = get_package_share_directory("cirtesu_tank_aruco_localization")
+    aruco_config_path = os.path.join(aruco_share, "config", "aruco_map.yaml")
+    aruco_params = load_node_parameters(aruco_config_path, "aruco_map_localization")
 
-    config_file = os.path.join(package_share, "config", "cirtesu_auv_localization.yaml")
-    aruco_config_file = os.path.join(aruco_share, "config", "aruco_map.yaml")
+    world_frame = LaunchConfiguration("world_frame").perform(context)
+    if not world_frame:
+        world_frame = namespaced_frame(robot_namespace, "map")
 
-    map_frame = LaunchConfiguration("map_frame")
-    odom_frame = LaunchConfiguration("odom_frame")
-    world_frame_value = LaunchConfiguration("world_frame").perform(context)
-    frame_convention = LaunchConfiguration("frame_convention").perform(context)
-    if frame_convention not in ("ned", "enu"):
-        raise RuntimeError("Launch argument 'frame_convention' must be 'ned' or 'enu'.")
-
-    publish_tf = LaunchConfiguration("publish_tf")
-    base_link_frame = LaunchConfiguration("base_link_frame").perform(context)
-    if not base_link_frame:
-        base_link_frame = f"{robot_namespace}/base_link"
-    map_frame_value = map_frame.perform(context)
-    if not map_frame_value:
-        map_frame_value = f"{robot_namespace}/map"
-
-    output_odom_topic = LaunchConfiguration("output_odom_topic").perform(context)
-    if not output_odom_topic:
-        output_odom_topic = "odometry/filtered"
-
-    output_ned_odom_topic = LaunchConfiguration("output_ned_odom_topic").perform(context)
-    if not output_ned_odom_topic:
-        output_ned_odom_topic = "localization/odometry"
-
-    datum_latitude = float(LaunchConfiguration("datum_latitude").perform(context))
-    datum_longitude = float(LaunchConfiguration("datum_longitude").perform(context))
-    datum_heading = float(LaunchConfiguration("datum_heading").perform(context))
-
-    frame_overrides = {
-        "map_frame": map_frame_value,
-        "odom_frame": odom_frame,
-        "base_link_frame": base_link_frame,
-        "world_frame": world_frame_value,
-        "publish_tf": publish_tf,
-    }
     aruco_overrides = {
-        "base_frame": f"{robot_namespace}/base_link",
-        "camera_frame": f"{robot_namespace}/down_camera/camera",
+        "world_frame": world_frame,
+        "base_frame": namespaced_frame(robot_namespace, "base_link"),
+        "camera_frame": namespaced_frame(robot_namespace, "camera_down/optical_frame"),
         "aruco_topic": "down_camera/aruco_detections",
         "marker_topic": "aruco/markers",
         "pose_topic": "sensors/aruco/pose_enu",
     }
 
-    nodes = [
-        Node(
-            package="tf2_ros",
-            executable="static_transform_publisher",
-            name="world_ned_to_world_enu",
-            output="screen",
-            arguments=[
-                "--x", "0.0",
-                "--y", "0.0",
-                "--z", "0.0",
-                "--roll", "3.14159265359",
-                "--pitch", "0.0",
-                "--yaw", "1.57079632679",
-                "--frame-id", "world_ned",
-                "--child-frame-id", "world_enu",
-            ],
-        ),
+    return [
         Node(
             package="tf2_ros",
             executable="static_transform_publisher",
             name="world_ned_to_cirtesu_tank",
             output="screen",
             arguments=[
-                "--x", "0.0",
-                "--y", "0.0",
-                "--z", "0.0",
-                "--roll", "0.0",
-                "--pitch", "0.0",
-                "--yaw", "3.1416",
-                "--frame-id", "world_ned",
-                "--child-frame-id", "cirtesu_tank",
-            ],
-        ),
-        Node(
-            package="sura_localization",
-            executable="ned_to_enu_imu",
-            name="imu_ned_to_enu",
-            output="screen",
-            parameters=[
-                    {
-                        "input_topic": "sensors/imu",
-                        "output_topic": "sensors/imu_enu",
-                        "frame_id": f"{robot_namespace}/IMU",
-                }
-            ],
-        ),
-        Node(
-            package="sura_localization",
-            executable="pressure_to_pose",
-            name="pressure_to_pose",
-            output="screen",
-            parameters=[
-                    {
-                        "input_topic": "sensors/pressure",
-                        "output_topic": "sensors/pressure/pose",
-                        "frame_id": "world_enu",
-                    "sensor_frame_id": f"{robot_namespace}/Pressure",
-                    "positive_down": True,
-                    "fallback_z_variance": 0.01,
-                }
+                "--x",
+                "0.0",
+                "--y",
+                "0.0",
+                "--z",
+                "0.0",
+                "--roll",
+                "0.0",
+                "--pitch",
+                "0.0",
+                "--yaw",
+                "3.1416",
+                "--frame-id",
+                "world_ned",
+                "--child-frame-id",
+                "cirtesu_tank",
             ],
         ),
         Node(
@@ -127,66 +70,74 @@ def launch_setup(context, *args, **kwargs):
             executable="aruco_map_localization_node",
             name="aruco_map_localization",
             output="screen",
-            parameters=[aruco_config_file, aruco_overrides],
-        ),
-        Node(
-            package="robot_localization",
-            executable="navsat_transform_node",
-            name="navsat_transform_node",
-            output="screen",
-            parameters=[
-                config_file,
-                {
-                    "wait_for_datum": True,
-                    "datum": [datum_latitude, datum_longitude, datum_heading],
-                },
-            ],
-        ),
-        Node(
-            package="robot_localization",
-            executable="ekf_node",
-            name="ekf_filter_node",
-            output="screen",
-            parameters=[config_file, frame_overrides],
+            parameters=[aruco_params, aruco_overrides],
         ),
     ]
 
-    if frame_convention == "enu":
-        nodes.append(
-            Node(
-                package="sura_localization",
-                executable="enu_to_ned_odometry",
-                name="gps_enu_to_ned_odometry",
-                output="screen",
-                parameters=[
-                    {
-                        "input_topic": output_odom_topic,
-                        "output_topic": output_ned_odom_topic,
-                        "frame_id": "world_ned",
-                        "child_frame_id": base_link_frame,
-                    }
-                ],
-            )
-        )
-
-    return nodes
-
 
 def generate_launch_description():
+    sura_localization_share = get_package_share_directory("sura_localization")
+    auv_localization_launch = os.path.join(
+        sura_localization_share,
+        "launch",
+        "auv_localization.launch.py",
+    )
+
     return LaunchDescription(
         [
-            DeclareLaunchArgument("robot_namespace"),
-            DeclareLaunchArgument("output_odom_topic", default_value=""),
-            DeclareLaunchArgument("output_ned_odom_topic", default_value=""),
+            DeclareLaunchArgument("robot_namespace", default_value=""),
+            DeclareLaunchArgument("environment", default_value="real"),
+            DeclareLaunchArgument("config_package", default_value="sura_localization"),
+            DeclareLaunchArgument("config_file", default_value="config/auv_localization.yaml"),
             DeclareLaunchArgument("map_frame", default_value=""),
-            DeclareLaunchArgument("odom_frame", default_value="world_enu"),
+            DeclareLaunchArgument("odom_frame", default_value=""),
             DeclareLaunchArgument("base_link_frame", default_value=""),
-            DeclareLaunchArgument("world_frame", default_value="world_enu"),
-            DeclareLaunchArgument("frame_convention", default_value="enu"),
-            DeclareLaunchArgument("publish_tf", default_value="false"),
+            DeclareLaunchArgument("world_frame", default_value=""),
+            DeclareLaunchArgument("publish_tf", default_value="true"),
+            DeclareLaunchArgument("use_navsat", default_value="true"),
+            DeclareLaunchArgument("wait_for_datum", default_value="true"),
             DeclareLaunchArgument("datum_latitude"),
             DeclareLaunchArgument("datum_longitude"),
             DeclareLaunchArgument("datum_heading"),
+            DeclareLaunchArgument("convert_imu_ned_to_enu", default_value="true"),
+            DeclareLaunchArgument("imu_ned_topic", default_value="sensors/imu"),
+            DeclareLaunchArgument("imu_enu_topic", default_value="sensors/imu_enu"),
+            DeclareLaunchArgument("imu_enu_frame", default_value=""),
+            DeclareLaunchArgument("convert_pressure_to_pose", default_value="true"),
+            DeclareLaunchArgument("pressure_topic", default_value="sensors/pressure"),
+            DeclareLaunchArgument("pressure_pose_topic", default_value="sensors/pressure/pose"),
+            DeclareLaunchArgument("output_odom_topic", default_value=""),
+            DeclareLaunchArgument("output_ned_odom_topic", default_value=""),
+            DeclareLaunchArgument("ned_world_frame", default_value="world_ned"),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(auv_localization_launch),
+                launch_arguments=[
+                    ("robot_namespace", LaunchConfiguration("robot_namespace")),
+                    ("environment", LaunchConfiguration("environment")),
+                    ("config_package", LaunchConfiguration("config_package")),
+                    ("config_file", LaunchConfiguration("config_file")),
+                    ("map_frame", LaunchConfiguration("map_frame")),
+                    ("odom_frame", LaunchConfiguration("odom_frame")),
+                    ("base_link_frame", LaunchConfiguration("base_link_frame")),
+                    ("world_frame", LaunchConfiguration("world_frame")),
+                    ("publish_tf", LaunchConfiguration("publish_tf")),
+                    ("use_navsat", LaunchConfiguration("use_navsat")),
+                    ("wait_for_datum", LaunchConfiguration("wait_for_datum")),
+                    ("datum_latitude", LaunchConfiguration("datum_latitude")),
+                    ("datum_longitude", LaunchConfiguration("datum_longitude")),
+                    ("datum_heading", LaunchConfiguration("datum_heading")),
+                    ("convert_imu_ned_to_enu", LaunchConfiguration("convert_imu_ned_to_enu")),
+                    ("imu_ned_topic", LaunchConfiguration("imu_ned_topic")),
+                    ("imu_enu_topic", LaunchConfiguration("imu_enu_topic")),
+                    ("imu_enu_frame", LaunchConfiguration("imu_enu_frame")),
+                    ("convert_pressure_to_pose", LaunchConfiguration("convert_pressure_to_pose")),
+                    ("pressure_topic", LaunchConfiguration("pressure_topic")),
+                    ("pressure_pose_topic", LaunchConfiguration("pressure_pose_topic")),
+                    ("output_odom_topic", LaunchConfiguration("output_odom_topic")),
+                    ("output_ned_odom_topic", LaunchConfiguration("output_ned_odom_topic")),
+                    ("ned_world_frame", LaunchConfiguration("ned_world_frame")),
+                ],
+            ),
             OpaqueFunction(function=launch_setup),
         ]
     )

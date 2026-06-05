@@ -39,8 +39,6 @@ def launch_setup(context, *args, **kwargs):
     config_path = os.path.join(get_package_share_directory(config_package), config_file)
     ekf_params = load_node_parameters(config_path, "ekf_filter_node")
     navsat_params = load_node_parameters(config_path, "navsat_transform_node")
-    aruco_share = get_package_share_directory("cirtesu_tank_aruco_localization")
-    aruco_config_path = os.path.join(aruco_share, "config", "aruco_map.yaml")
 
     map_frame = LaunchConfiguration("map_frame").perform(context)
     if not map_frame:
@@ -77,14 +75,6 @@ def launch_setup(context, *args, **kwargs):
         "world_frame": world_frame,
         "publish_tf": LaunchConfiguration("publish_tf"),
     }
-    aruco_overrides = {
-        "world_frame": world_frame,
-        "base_frame": namespaced_frame(robot_namespace, "base_link"),
-        "camera_frame": namespaced_frame(robot_namespace, "camera_down/optical_frame"),
-        "aruco_topic": "down_camera/aruco_detections",
-        "marker_topic": "aruco/markers",
-        "pose_topic": "sensors/aruco/pose_enu",
-    }
 
     nodes = [
         Node(
@@ -102,29 +92,6 @@ def launch_setup(context, *args, **kwargs):
                 "--frame-id", "world_ned",
                 "--child-frame-id", world_frame,
             ],
-        ),
-        Node(
-            package="tf2_ros",
-            executable="static_transform_publisher",
-            name="world_ned_to_cirtesu_tank",
-            output="screen",
-            arguments=[
-                "--x", "0.0",
-                "--y", "0.0",
-                "--z", "0.0",
-                "--roll", "0.0",
-                "--pitch", "0.0",
-                "--yaw", "3.1416",
-                "--frame-id", "world_ned",
-                "--child-frame-id", "cirtesu_tank",
-            ],
-        ),
-        Node(
-            package="cirtesu_tank_aruco_localization",
-            executable="aruco_map_localization_node",
-            name="aruco_map_localization",
-            output="screen",
-            parameters=[aruco_config_path, aruco_overrides],
         ),
         Node(
             package="robot_localization",
@@ -193,6 +160,7 @@ def launch_setup(context, *args, **kwargs):
                     {
                         "input_topic": LaunchConfiguration("pressure_topic"),
                         "output_topic": LaunchConfiguration("pressure_pose_topic"),
+                        "environment": LaunchConfiguration("environment"),
                         "frame_id": world_frame,
                         "sensor_frame_id": namespaced_frame(robot_namespace, "pressure_link"),
                         "positive_down": True,
@@ -227,6 +195,7 @@ def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument("robot_namespace", default_value=""),
+            DeclareLaunchArgument("environment", default_value="real"),
             DeclareLaunchArgument("config_package", default_value="sura_localization"),
             DeclareLaunchArgument("config_file", default_value="config/auv_localization.yaml"),
             DeclareLaunchArgument("map_frame", default_value=""),

@@ -10,7 +10,7 @@ ekf_filter_node:
     world_frame: map
 
     pose0: sensors/pressure/pose
-    pose0_config: [true,  true,  true,
+    pose0_config: [false,  false,  true,
                    false, false, false,
                    false, false, false,
                    false, false, false,
@@ -30,29 +30,29 @@ ekf_filter_node:
     # pose1_queue_size: 10
     # pose1_rejection_threshold: 2.0
 
-    # odom0: sensors/gps/odometry
-    # odom0_config: [true, true, false,
-    #                false, false, false,
-    #                false, false, false,
-    #                false, false, false,
-    #                false, false, false]
-    # odom0_differential: false
-    # odom0_relative: false
-    # odom0_queue_size: 10
+    odom0: sensors/gps/odometry
+    odom0_config: [true, true, false,
+                   false, false, false,
+                   false, false, false,
+                   false, false, false,
+                   false, false, false]
+    odom0_differential: false
+    odom0_relative: false
+    odom0_queue_size: 10
 
-    # twist0: sensors/dvl/twist
-    # twist0_config: [false, false, false,
-    #                 false, false, false,
-    #                 true, true, false,
-    #                 false, false, false,
-    #                 false, false, false]
-    # twist0_differential: false
-    # twist0_relative: false
-    # twist0_queue_size: 10
+    twist0: sensors/dvl/twist
+    twist0_config: [false, false, false,
+                    false, false, false,
+                    true, true, false,
+                    false, false, false,
+                    false, false, false]
+    twist0_differential: false
+    twist0_relative: false
+    twist0_queue_size: 10
 
     imu0: sensors/imu_enu
     imu0_config: [false, false, false,
-                  true,  true,  false,
+                  true,  true,  true,
                   false, false, false,
                   false,  false,  false,
                   false, false, false]
