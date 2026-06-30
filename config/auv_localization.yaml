@@ -1,27 +1,36 @@
 ekf_filter_node:
   ros__parameters:
-    frequency: 80.0
+    frequency: 50.0
     sensor_timeout: 0.2
     two_d_mode: false
-    publish_tf: true
+    publish_tf: false
+    # map_frame: bluerov/map
+    # odom_frame: world_enu
+    # base_link_frame: bluerov/base_link
+    # world_frame: world_enu
     map_frame: map
-    odom_frame: map
+    odom_frame: world_enu
     base_link_frame: base_link
-    world_frame: map
+    world_frame: world_enu
 
     pose0: sensors/pressure/pose
-    pose0_config: [false,  false,  true,
-                   false, false, false,
-                   false, false, false,
-                   false, false, false,
-                   false, false, false]
+    # pose0_config: [true, true, true,
+    #                false, false, false,
+    #                false, false, false,
+    #                false, false, false,
+    #                false, false, false]
+    pose0_config: [false, false, true,
+                false, false, false,
+                false, false, false,
+                false, false, false,
+                false, false, false]
     pose0_differential: false
     pose0_relative: false
-    pose0_queue_size: 5
+    pose0_queue_size: 10
 
     # pose1: sensors/aruco/pose_enu
     # pose1_config: [true, true, false,
-    #                false, false, false,
+    #                false, false, true,
     #                false, false, false,
     #                false, false, false,
     #                false, false, false]
@@ -29,36 +38,52 @@ ekf_filter_node:
     # pose1_relative: false
     # pose1_queue_size: 10
     # pose1_rejection_threshold: 2.0
-
-    odom0: sensors/gps/odometry
-    odom0_config: [true, true, false,
+    
+    pose1: sensors/xy_anchor/pose_enu
+    pose1_config: [true, true, false,
                    false, false, false,
                    false, false, false,
                    false, false, false,
                    false, false, false]
-    odom0_differential: false
-    odom0_relative: false
-    odom0_queue_size: 10
+    pose1_differential: false
+    pose1_relative: false
+    pose1_queue_size: 10
+    pose1_rejection_threshold: 1000.0
 
-    twist0: sensors/dvl/twist
-    twist0_config: [false, false, false,
-                    false, false, false,
-                    true, true, false,
-                    false, false, false,
-                    false, false, false]
-    twist0_differential: false
-    twist0_relative: false
-    twist0_queue_size: 10
+    # odom0: sensors/gps/odometry
+    # odom0_config: [true, true, false,
+    #                false, false, false,
+    #                false, false, false,
+    #                false, false, false,
+    #                false, false, false]
+    # odom0_differential: false
+    # odom0_relative: false
+    # odom0_queue_size: 10
+
+    # twist0: sensors/dvl/twist
+    # twist0_config: [false, false, false,
+    #                 false, false, false,
+    #                 true, true, false,
+    #                 false, false, false,
+    #                 false, false, false]
+    # twist0_differential: false
+    # twist0_relative: false
+    # twist0_queue_size: 10
 
     imu0: sensors/imu_enu
+    # imu0_config: [false, false, false,
+    #               true,  true,  true,
+    #               false, false, false,
+    #               false, false,  false,
+    #               false, false, false]
     imu0_config: [false, false, false,
-                  true,  true,  true,
-                  false, false, false,
-                  false,  false,  false,
-                  false, false, false]
+              true,  true,  true,
+              false, false, false,
+              true,  true,  true,
+              false, false, false]
     imu0_differential: false
     imu0_relative: false
-    imu0_queue_size: 5
+    imu0_queue_size: 20
     imu0_remove_gravitational_acceleration: false
 
 navsat_transform_node:

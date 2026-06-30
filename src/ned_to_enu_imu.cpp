@@ -11,15 +11,6 @@
 namespace
 {
 
-geometry_msgs::msg::Vector3 transform_vector(const geometry_msgs::msg::Vector3 & vector)
-{
-  geometry_msgs::msg::Vector3 converted;
-  converted.x = vector.y;
-  converted.y = vector.x;
-  converted.z = -vector.z;
-  return converted;
-}
-
 geometry_msgs::msg::Quaternion multiply_quaternions(
   const geometry_msgs::msg::Quaternion & left,
   const geometry_msgs::msg::Quaternion & right)
@@ -121,11 +112,17 @@ private:
     converted.header.frame_id = get_parameter("frame_id").as_string();
     converted.orientation = rotate_orientation(msg.orientation);
     converted.orientation_covariance = transform_covariance(msg.orientation_covariance);
-    converted.angular_velocity = transform_vector(msg.angular_velocity);
+
+    converted.angular_velocity.x = msg.angular_velocity.y;
+    converted.angular_velocity.y = msg.angular_velocity.x;
+    converted.angular_velocity.z = -msg.angular_velocity.z;
     converted.angular_velocity_covariance = transform_covariance(msg.angular_velocity_covariance);
-    converted.linear_acceleration = transform_vector(msg.linear_acceleration);
-    converted.linear_acceleration_covariance =
-      transform_covariance(msg.linear_acceleration_covariance);
+
+    converted.linear_acceleration.x = msg.linear_acceleration.y;
+    converted.linear_acceleration.y = msg.linear_acceleration.x;
+    converted.linear_acceleration.z = -msg.linear_acceleration.z;
+    converted.linear_acceleration_covariance = transform_covariance(msg.linear_acceleration_covariance);
+
     publisher_->publish(converted);
   }
 

@@ -46,11 +46,11 @@ def launch_setup(context, *args, **kwargs):
 
     odom_frame = LaunchConfiguration("odom_frame").perform(context)
     if not odom_frame:
-        odom_frame = map_frame
+        odom_frame = "world_enu"
 
     world_frame = LaunchConfiguration("world_frame").perform(context)
     if not world_frame:
-        world_frame = map_frame
+        world_frame = "world_enu"
 
     base_link_frame = LaunchConfiguration("base_link_frame").perform(context)
     if not base_link_frame:
@@ -165,12 +165,34 @@ def launch_setup(context, *args, **kwargs):
                         "sensor_frame_id": namespaced_frame(robot_namespace, "pressure_link"),
                         "positive_down": True,
                         "fallback_z_variance": 0.01,
-                        "fallback_xy_variance": 0.01,
+                        "fallback_xy_variance": 99999.0,
                     }
                 ],
             )
         )
-
+        nodes.append(
+        Node(
+            package="sura_localization",
+            executable="xy_anchor_pose",
+            name="xy_anchor_pose",
+            output="screen",
+            parameters=[
+                {
+                    "output_topic": "sensors/xy_anchor/pose_enu",
+                    "frame_id": world_frame,
+                    "publish_rate_hz": 10.0,
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "xy_variance": 0.0001,
+                    "z_variance": 99999.0,
+                    "roll_variance": 99999.0,
+                    "pitch_variance": 99999.0,
+                    "yaw_variance": 99999.0,
+                }
+            ],
+        )
+    )
     nodes.append(
         Node(
             package="sura_localization",
@@ -203,7 +225,8 @@ def generate_launch_description():
             DeclareLaunchArgument("base_link_frame", default_value=""),
             DeclareLaunchArgument("world_frame", default_value=""),
             DeclareLaunchArgument("publish_tf", default_value="true"),
-            DeclareLaunchArgument("use_navsat", default_value="true"),
+            # DeclareLaunchArgument("use_navsat", default_value="true"),
+            DeclareLaunchArgument("use_navsat", default_value="false"),
             DeclareLaunchArgument("wait_for_datum", default_value="true"),
             DeclareLaunchArgument("datum_latitude"),
             DeclareLaunchArgument("datum_longitude"),

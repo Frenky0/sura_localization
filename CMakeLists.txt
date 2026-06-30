@@ -11,7 +11,7 @@ find_package(nav_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 
-foreach(target ned_to_enu_imu enu_to_ned_odometry pressure_to_pose)
+foreach(target ned_to_enu_imu enu_to_ned_odometry pressure_to_pose xy_anchor_pose)
   add_executable(${target} src/${target}.cpp)
   ament_target_dependencies(${target}
     geometry_msgs
@@ -26,6 +26,7 @@ install(TARGETS
   ned_to_enu_imu
   enu_to_ned_odometry
   pressure_to_pose
+  xy_anchor_pose
   DESTINATION lib/${PROJECT_NAME}
 )
 

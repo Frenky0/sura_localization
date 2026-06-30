@@ -49,7 +49,18 @@ geometry_msgs::msg::Quaternion rotate_orientation(
   enu_to_ned.y = std::sqrt(0.5);
   enu_to_ned.z = 0.0;
   enu_to_ned.w = 0.0;
-  return normalize_quaternion(multiply_quaternions(enu_to_ned, orientation));
+
+  geometry_msgs::msg::Quaternion flu_to_frd;
+  flu_to_frd.x = 1.0;
+  flu_to_frd.y = 0.0;
+  flu_to_frd.z = 0.0;
+  flu_to_frd.w = 0.0;
+
+  const auto orientation_ned_flu =
+    multiply_quaternions(enu_to_ned, orientation);
+
+  return normalize_quaternion(
+    multiply_quaternions(orientation_ned_flu, flu_to_frd));
 }
 
 std::array<double, 36> transform_pose_covariance(const std::array<double, 36> & covariance)
@@ -78,15 +89,15 @@ std::array<double, 36> transform_pose_covariance(const std::array<double, 36> & 
   return converted;
 }
 
-std::array<double, 36> transform_twist_angular_covariance(
+std::array<double, 36> transform_twist_covariance(
   const std::array<double, 36> & covariance)
 {
   constexpr double transform[6][6] = {
     {1.0, 0.0, 0.0, 0.0, 0.0, 0.0},
-    {0.0, 1.0, 0.0, 0.0, 0.0, 0.0},
-    {0.0, 0.0, 1.0, 0.0, 0.0, 0.0},
-    {0.0, 0.0, 0.0, 0.0, 1.0, 0.0},
+    {0.0, -1.0, 0.0, 0.0, 0.0, 0.0},
+    {0.0, 0.0, -1.0, 0.0, 0.0, 0.0},
     {0.0, 0.0, 0.0, 1.0, 0.0, 0.0},
+    {0.0, 0.0, 0.0, 0.0, -1.0, 0.0},
     {0.0, 0.0, 0.0, 0.0, 0.0, -1.0},
   };
 
@@ -149,11 +160,14 @@ private:
     converted.pose.covariance = transform_pose_covariance(msg.pose.covariance);
 
     converted.twist = msg.twist;
-    converted.twist.twist.angular.x = msg.twist.twist.angular.y;
-    converted.twist.twist.angular.y = msg.twist.twist.angular.x;
-    converted.twist.twist.angular.z = -msg.twist.twist.angular.z;
-    converted.twist.covariance = transform_twist_angular_covariance(msg.twist.covariance);
+    converted.twist.twist.linear.x = msg.twist.twist.linear.x;
+    converted.twist.twist.linear.y = -msg.twist.twist.linear.y;
+    converted.twist.twist.linear.z = -msg.twist.twist.linear.z;
 
+    converted.twist.twist.angular.x = msg.twist.twist.angular.x;
+    converted.twist.twist.angular.y = -msg.twist.twist.angular.y;
+    converted.twist.twist.angular.z = -msg.twist.twist.angular.z;
+    converted.twist.covariance = transform_twist_covariance(msg.twist.covariance);
     publisher_->publish(converted);
   }
 
